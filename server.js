@@ -1,11 +1,19 @@
-const app = require("./src/app")
-const db = require("./db/connection");
+const express = require('express');
+const { Restaurant } = require('./models');
+
+const app = express();
+
+app.get('/restaurants', async (req, res) => {
+  try {
+    const restaurants = await Restaurant.findAll();
+    res.json(restaurants);
+  } catch (error) {
+    console.error('Error fetching restaurants:', error);
+    res.status(500).json({ message: 'Error fetching restaurants' });
+  }
+});
+
 const port = 3000;
-
-//TODO: Create your GET Request Route Below: 
-
-
 app.listen(port, () => {
-    db.sync();
-    console.log(`Listening at http://localhost:${port}/restaurants`);
-})
+  console.log(`Server is running on http://localhost:${port}`);
+});
