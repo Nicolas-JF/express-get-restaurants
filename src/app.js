@@ -1,19 +1,18 @@
-const express = require('express');
-const { Restaurant } = require('./models');
-
+const express = require("express");
+const { Restaurant } = require("./models");
 const app = express();
+const port = 3000;
 
-app.get('/restaurants', async (req, res) => {
-  try {
-    const restaurants = await Restaurant.findAll();
-    res.json(restaurants);
-  } catch (error) {
-    console.error('Error fetching restaurants:', error);
-    res.status(500).json({ message: 'Error fetching restaurants' });
+app.get("/restaurants/:id", async (req, res) => {
+  const id = req.params.id;
+  const restaurant = await Restaurant.findByPk(id);
+  if (restaurant) {
+    res.json(restaurant);
+  } else {
+    res.status(404).send("Restaurant not found");
   }
 });
 
-const port = 3000;
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
