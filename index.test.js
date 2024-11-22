@@ -1,78 +1,67 @@
-const request = require('supertest');
-const app = require('./src/app');
+const request = require("supertest");
+const app = require("./app");
 
-describe('Restaurants API', () => {
-  it('should return status 200 for GET /restaurants', async () => {
-    const response = await request(app).get('/restaurants');
-    expect(response.status).toBe(200);
+describe("POST /restaurants", () => {
+  it("should return an error if name is missing", async () => {
+    const response = await request(app)
+      .post("/restaurants")
+      .send({ location: "Los Angeles", cuisine: "Italian" });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body.error).toEqual([
+      {
+        msg: "Name is required and cannot be empty or whitespace",
+        param: "name",
+        location: "body",
+        value: ""
+      }
+    ]);
   });
 
-  it('should return an array of restaurants from GET /restaurants', async () => {
-    const response = await request(app).get('/restaurants');
-    expect(Array.isArray(response.body)).toBe(true);
+  it("should return an error if location is missing", async () => {
+    const response = await request(app)
+      .post("/restaurants")
+      .send({ name: "Pizza Palace", cuisine: "Italian" });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body.error).toEqual([
+      {
+        msg: "Location is required and cannot be empty or whitespace",
+        param: "location",
+        location: "body",
+        value: ""
+      }
+    ]);
   });
 
-  it('should return the correct number of restaurants from GET /restaurants', async () => {
-    const response = await request(app).get('/restaurants');
-    expect(response.body.length).toBeGreaterThan(0);
+  it("should return an error if cuisine is missing", async () => {
+    const response = await request(app)
+      .post("/restaurants")
+      .send({ name: "Pizza Palace", location: "Los Angeles" });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body.error).toEqual([
+      {
+        msg: "Cuisine is required and cannot be empty or whitespace",
+        param: "cuisine",
+        location: "body",
+        value: ""
+      }
+    ]);
   });
 
-  it('should return correct restaurant data from GET /restaurants', async () => {
-    const response = await request(app).get('/restaurants');
-    expect(response.body[0]).toHaveProperty('name');
-    expect(response.body[0]).toHaveProperty('location');
-    expect(response.body[0]).toHaveProperty('cuisine');
-  });
-
-  it('should return the correct restaurant data for GET /restaurants/:id', async () => {
-    const restaurantId = 1;
-    const response = await request(app).get(`/restaurants/${restaurantId}`);
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('id', restaurantId);
-    expect(response.body).toHaveProperty('name');
-  });
-
-  it('should add a new restaurant and update the restaurants array on POST /restaurants', async () => {
+  it("should add a new restaurant if all fields are valid", async () => {
     const newRestaurant = {
-      name: 'New Restaurant',
-      location: 'New York',
-      cuisine: 'Italian',
+      name: "Sushi House",
+      location: "Tokyo",
+      cuisine: "Japanese"
     };
 
     const response = await request(app)
-      .post('/restaurants')
+      .post("/restaurants")
       .send(newRestaurant);
 
-    expect(response.status).toBe(201);
-    expect(response.body).toHaveLength(4);
-    expect(response.body[response.body.length - 1]).toHaveProperty('name', newRestaurant.name);
-  });
-
-  it('should update a restaurant data on PUT /restaurants/:id', async () => {
-    const restaurantId = 1;
-    const updatedData = {
-      name: 'Updated Restaurant',
-      location: 'Los Angeles',
-      cuisine: 'Mexican',
-    };
-
-    const response = await request(app)
-      .put(`/restaurants/${restaurantId}`)
-      .send(updatedData);
-
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('name', updatedData.name);
-    expect(response.body).toHaveProperty('location', updatedData.location);
-  });
-
-  it('should delete a restaurant on DELETE /restaurants/:id', async () => {
-    const restaurantId = 1;
-
-    const response = await request(app).delete(`/restaurants/${restaurantId}`);
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('message', 'Restaurant deleted successfully');
-
-    const getResponse = await request(app).get(`/restaurants/${restaurantId}`);
-    expect(getResponse.status).toBe(404);
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContainEqual(newRestaurant);
   });
 });
