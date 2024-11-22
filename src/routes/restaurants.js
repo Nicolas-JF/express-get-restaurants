@@ -1,75 +1,38 @@
 const express = require("express");
-const { Restaurant } = require("../../models");
+const { check, validationResult } = require("express-validator");
 const router = express.Router();
 
-router.post("/", async (req, res) => {
-  try {
+const restaurantData = [
+  { name: "Bobs Burgers", location: "New York City", cuisine: "American" },
+  { name: "Harry's Fish Shack", location: "London", cuisine: "Seafood" },
+  { name: "Elizabeth's Hot Dogs", location: "Chicago", cuisine: "Fast Food" },
+];
+
+router.use(express.json());
+
+router.get("/", (req, res) => {
+  res.json(restaurantData);
+});
+
+router.post(
+  "/",
+  [
+    check("name", "Name is required and cannot be empty or whitespace").trim().notEmpty(),
+    check("location", "Location is required and cannot be empty or whitespace").trim().notEmpty(),
+    check("cuisine", "Cuisine is required and cannot be empty or whitespace").trim().notEmpty()
+  ],
+  (req, res) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: errors.array() });
+    }
+
     const { name, location, cuisine } = req.body;
-    const newRestaurant = await Restaurant.create({
-      name,
-      location,
-      cuisine,
-    });
-    res.status(201).json(newRestaurant);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+    const newRestaurant = { name, location, cuisine };
+    restaurantData.push(newRestaurant);
+    res.status(200).json(restaurantData);
   }
-});
-
-router.put("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, location, cuisine } = req.body;
-    const restaurant = await Restaurant.findByPk(id);
-
-    if (restaurant) {
-      await restaurant.update({ name, location, cuisine });
-      res.json(restaurant);
-    } else {
-      res.status(404).json({ error: "Restaurant not found" });
-    }
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-router.delete("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const rowsDeleted = await Restaurant.destroy({
-      where: { id },
-    });
-
-    if (rowsDeleted > 0) {
-      res.status(200).json({ message: "Restaurant deleted successfully" });
-    } else {
-      res.status(404).json({ error: "Restaurant not found" });
-    }
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-router.get("/", async (req, res) => {
-  try {
-    const restaurants = await Restaurant.findAll();
-    res.status(200).json(restaurants);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-router.get("/:id", async (req, res) => {
-  try {
-    const restaurant = await Restaurant.findByPk(req.params.id);
-    if (!restaurant) {
-      return res.status(404).json({ error: "Restaurant not found" });
-    }
-    res.status(200).json(restaurant);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+);
 
 module.exports = router;
